@@ -4,7 +4,10 @@ import { Button } from '@/components/button'
 import { InputField, InputIcon, InputRoot } from '@/components/input'
 import { ArrowRight, Mail, User } from 'lucide-react'
 
+import { subscribeToEvent } from '@/http/api'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { use } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -16,16 +19,23 @@ const subscriptionSchema = z.object({
 type SubscriptionSquema = z.infer<typeof subscriptionSchema>
 
 export default function SubscriptionForm() {
+    const router = useRouter()
+    const searchParams = useSearchParams()
+
     const {
         register,
         handleSubmit,
         formState: { errors },
-    } = useForm <SubscriptionSquema> ({
+    } = useForm<SubscriptionSquema>({
         resolver: zodResolver(subscriptionSchema),
     })
 
-    function onSubscribe(data: SubscriptionSquema) {  
-        console.log(data)
+    async function onSubscribe({ name, email }: SubscriptionSquema) {
+        const referrer = searchParams.get('referrer')
+
+        const { subscriberId } = await subscribeToEvent({ name, email, referrer })
+
+        router.push(`/invite/${subscriberId}`)
     }
 
     return (
@@ -50,7 +60,11 @@ export default function SubscriptionForm() {
                         />
                     </InputRoot>
 
-                    {errors.name && <p className='text-danger text-xs font-semibold'>{errors.name.message}</p>}
+                    {errors.name && (
+                        <p className="text-danger text-xs font-semibold">
+                            {errors.name.message}
+                        </p>
+                    )}
                 </div>
                 <div className="space-y-2">
                     <InputRoot>
@@ -64,7 +78,11 @@ export default function SubscriptionForm() {
                         />
                     </InputRoot>
 
-                    {errors.email && <p className='text-danger text-xs font-semibold'>{errors.email.message}</p>}
+                    {errors.email && (
+                        <p className="text-danger text-xs font-semibold">
+                            {errors.email.message}
+                        </p>
+                    )}
                 </div>
             </div>
 
